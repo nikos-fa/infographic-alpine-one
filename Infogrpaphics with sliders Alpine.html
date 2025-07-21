@@ -290,7 +290,7 @@
                             <label for="sliderDiscover" class="w-full md:w-1/4 font-semibold text-gray-700">1. Discover:</label>
                             <!-- x-bind:value binds the input's value to the discoverTime variable -->
                             <!-- x-on:input updates discoverTime. The chart update is handled by $watch in init() -->
-                            <input type="range" id="sliderDiscover" min="0" max="90" x-model="discoverTime" class="flex-grow md:w-3/4">
+                            <input type="range" id="sliderDiscover" min="0" max="90" x-model="discoverTime" x-on:input="discoverTime = parseInt($event.target.value)" class="flex-grow md:w-3/4">
                             <!-- x-text displays the current value of discoverTime -->
                             <span id="valueDiscover" class="ml-4 text-gray-600 w-12 text-right" x-text="discoverTime + ' min'"></span>
                         </div>
