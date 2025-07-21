@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>From Prospect to Prodigy: An Infographic on Needs-Based Teaching (Alpine.js)</title>
+    <!-- Tailwind CSS CDN for utility classes -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts for 'Inter' -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- Alpine.js CDN (defer to ensure it runs after DOM is parsed) -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        /* Custom font for the body */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Styling for chart containers to ensure responsiveness and aspect ratio */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px; /* Max width for larger screens */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Default height */
+            max-height: 400px; /* Max height */
+        }
+        /* Adjust chart container height for medium screens */
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        /* Styling for flow arrows */
+        .flow-arrow {
+            font-size: 2.5rem;
+            line-height: 1;
+            color: #3357FF; /* Blue color */
+        }
+        /* Custom slider styles for better appearance and consistency */
+        input[type="range"] {
+            -webkit-appearance: none; /* Remove default WebKit styles */
+            width: 100%;
+            height: 8px; /* Thickness of the track */
+            background: #d3d3d3; /* Track background color */
+            outline: none; /* Remove outline on focus */
+            opacity: 0.7; /* Initial opacity */
+            -webkit-transition: .2s; /* Smooth transition for opacity */
+            transition: opacity .2s;
+            border-radius: 5px; /* Rounded corners for the track */
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; /* Remove default WebKit styles */
+            appearance: none;
+            width: 20px; /* Size of the thumb */
+            height: 20px; /* Size of the thumb */
+            border-radius: 50%; /* Make it round */
+            background: #3357FF; /* Thumb color (blue) */
+            cursor: pointer; /* Pointer cursor on hover */
+            border: 2px solid #fff; /* White border around the thumb */
+            box-shadow: 0 0 5px rgba(0,0,0,0.3); /* Subtle shadow */
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3357FF;
+            cursor: pointer;
+            border: 2px solid #fff;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<!--
+    The x-data directive initializes an Alpine.js component scope.
+    All reactive data and functions for this page are defined here.
+-->
+<body class="bg-gray-100 text-gray-800" x-data="{
+    // --- Chart Utility Functions ---
+    // Callback for Chart.js tooltips to handle multi-line labels
+    tooltipTitleCallback: (tooltipItems) => {
+        const item = tooltipItems[0];
+        let label = item.chart.data.labels[item.dataIndex];
+        if (Array.isArray(label)) {
+            return label.join(' ');
+        }
+        return label;
+    },
+    // Function to wrap long labels for better display on charts
+    wrapLabel: (label) => {
+        const maxLength = 16; // Max characters per line
+        if (label.length <= maxLength) {
+            return label;
+        }
+        const words = label.split(' ');
+        const lines = [];
+        let currentLine = '';
+        for (const word of words) {
+            if ((currentLine + ' ' + word).length > maxLength && currentLine.length > 0) {
+                lines.push(currentLine);
+                currentLine = word;
+            } else {
+                currentLine = currentLine ? currentLine + ' ' + word : word;
+            }
+        }
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+        return lines;
+    },
+    // Color palette for charts
+    palette: {
+        orange: '#FF5733',
+        green: '#33FF57',
+        blue: '#3357FF',
+        pink: '#FF33A1',
+        yellow: '#F1C40F',
+        lightGray: '#F3F4F6',
+        purple: '#8A2BE2'
+    },
+
+    // --- Time Allocation State (managed by Alpine.js) ---
+    discoverTime: 20,
+    connectTime: 15,
+    coCreateTime: 40,
+    reinforceTime: 15,
+    bufferTime: 0,
+    totalLessonTime: 90, // Fixed total lesson time
+    timeAllocationChart: null, // Holds the Chart.js instance for the doughnut chart
+    updateTimeout: null, // To store the timeout ID for debouncing updates
+
+    // Function to update the doughnut chart data when slider values change
+    updateTimeAllocationChart() {
+        // Clear any existing timeout to debounce updates
+        clearTimeout(this.updateTimeout);
+
+        // Set a new timeout to update the chart after a short delay
+        this.updateTimeout = setTimeout(() => {
+            if (this.timeAllocationChart) {
+                this.timeAllocationChart.data.datasets[0].data = [
+                    this.discoverTime,
+                    this.connectTime,
+                    this.coCreateTime,
+                    this.reinforceTime,
+                    this.bufferTime
+                ];
+                this.timeAllocationChart.update(); // Redraw the chart
+            }
+        }, 50); // 50ms delay
+    },
+
+    // Computed property to get the current sum of all slider values
+    get currentTotalTime() {
+        return this.discoverTime + this.connectTime + this.coCreateTime + this.reinforceTime + this.bufferTime;
+    },
+
+    // Alpine.js init function for the main data scope (now empty as watchers are moved)
+    init() {
+        // Watchers are now defined within the specific chart's x-init block
+        // to ensure the chart instance is available when they are set up.
+    }
+}">
+
+    <div class="container mx-auto p-4 md:p-8">
+
+        <!-- Header Section -->
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-6xl font-black text-[#3357FF] uppercase tracking-wide">From Prospect to Prodigy</h1>
+            <p class="text-lg md:text-xl text-gray-600 mt-2 max-w-3xl mx-auto">Visualizing the "Needs-Based Pedagogy" System for Teaching Scratch to Students Who Aren't (Yet) Interested in Coding</p>
+        </header>
+
+        <main>
+            <!-- Philosophy Section -->
+            <section id="philosophy" class="mb-16">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+                    <div class="md:col-span-1 text-center">
+                        <div class="text-7xl md:text-9xl font-black text-[#FF5733]">100%</div>
+                        <p class="text-xl font-bold text-gray-700">Student-Need Focused</p>
+                        <p class="text-gray-600 mt-2">The core principle is a complete shift from delivering a product (knowledge) to fulfilling a customer's need (a student's desire for creative expression, problem-solving, and fun).</p>
+                    </div>
+                    <div class="md:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-2xl font-bold text-[#3357FF] mb-4">The Teacher's Mindset Shift</h2>
+                        <ul class="space-y-4">
+                            <li class="flex items-start"><span class="text-2xl mr-4">🕵️</span><div><h3 class="font-bold">The Detective</h3><p>Listen and observe keenly to uncover students' true interests, frustrations, and aspirations.</p></div></li>
+                            <li class="flex items-start"><span class="text-2xl mr-4">💡</span><div><h3 class="font-bold">The Value Proposer</h3><p>Position Scratch as the exciting solution to *their* desires, not just another subject to learn.</p></div></li>
+                            <li class="flex items-start"><span class="text-2xl mr-4">🏆</span><div><h3 class="font-bold">The Encourager</h3><p>Celebrate every small victory and moment of experimentation to build confidence and momentum.</p></div></li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Lesson Flow Section -->
+            <section id="lesson-flow" class="mb-16 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-3xl font-bold text-center mb-2 text-[#3357FF]">The 4-Phase NBP Lesson Flow</h2>
+                <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">This 60-90 minute lesson is structured like a sales cycle, moving students from disinterest to active creation by focusing entirely on their intrinsic motivations.</p>
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
+                    <div class="text-center p-4 border-2 border-[#FF5733] border-dashed rounded-lg w-full md:w-1/5">
+                        <h3 class="font-bold text-xl text-[#FF5733]">1. Discover</h3>
+                        <p>Unpack student needs and desires without mentioning code.</p>
+                    </div>
+                    <div class="flow-arrow transform md:rotate-0 rotate-90">→</div>
+                    <div class="text-center p-4 border-2 border-[#F1C40F] border-dashed rounded-lg w-full md:w-1/5">
+                        <h3 class="font-bold text-xl text-[#F1C40F]">2. Connect</h3>
+                        <p>Frame Scratch as the powerful tool to bring their ideas to life.</p>
+                    </div>
+                     <div class="flow-arrow transform md:rotate-0 rotate-90">→</div>
+                    <div class="text-center p-4 border-2 border-[#33FF57] border-dashed rounded-lg w-full md:w-1/5">
+                        <h3 class="font-bold text-xl text-[#33FF57]">3. Co-Create</h3>
+                        <p>Enable hands-on creation with immediate, tangible results.</p>
+                    </div>
+                     <div class="flow-arrow transform md:rotate-0 rotate-90">→</div>
+                    <div class="text-center p-4 border-2 border-[#FF33A1] border-dashed rounded-lg w-full md:w-1/5">
+                        <h3 class="font-bold text-xl text-[#FF33A1]">4. Reinforce</h3>
+                        <p>Reflect on creations and spark curiosity for what's next.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Data Visualization Section (Charts and Sliders) -->
+            <section id="data-viz" class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+                <!-- Time Allocation Chart and Sliders -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-center mb-4 text-[#3357FF]">Lesson Time Allocation by Phase</h3>
+                    <p class="text-center text-gray-600 mb-4">Adjust the sliders below to customize the time allocation for each phase. The total lesson time is fixed at 90 minutes.</p>
+                    <!--
+                        x-init runs when the Alpine component is initialized.
+                        It's used here to create the Chart.js doughnut chart.
+                        x-ref provides a reference to the canvas element.
+                        The $watch directives are now inside this x-init block.
+                    -->
+                    <div class="chart-container" x-init="
+                        const timeCtx = $refs.timeAllocationCanvas.getContext('2d');
+                        timeAllocationChart = new Chart(timeCtx, {
+                            type: 'doughnut',
+                            data: {
+                                labels: ['Phase 1: Discover', 'Phase 2: Connect', 'Phase 3: Co-Create', 'Phase 4: Reinforce', '5. Buffer/Flex'],
+                                datasets: [{
+                                    label: 'Time Allocation (minutes)',
+                                    data: [discoverTime, connectTime, coCreateTime, reinforceTime, bufferTime],
+                                    backgroundColor: [
+                                        palette.orange,
+                                        palette.yellow,
+                                        palette.green,
+                                        palette.pink,
+                                        palette.purple
+                                    ],
+                                    borderColor: palette.lightGray,
+                                    borderWidth: 4,
+                                    hoverOffset: 8
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: { position: 'bottom' },
+                                    tooltip: {
+                                        callbacks: {
+                                            title: tooltipTitleCallback,
+                                            label: function(context) {
+                                                const label = context.chart.data.labels[context.dataIndex];
+                                                const value = context.chart.data.datasets[0].data[context.dataIndex];
+                                                return `${label}: ${value} min`;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+                        // Watch for changes in time allocation variables and trigger a debounced update
+                        // These watchers are now defined AFTER the chart instance is created.
+                        this.$watch('discoverTime', () => this.updateTimeAllocationChart());
+                        this.$watch('connectTime', () => this.updateTimeAllocationChart());
+                        this.$watch('coCreateTime', () => this.updateTimeAllocationChart());
+                        this.$watch('reinforceTime', () => this.updateTimeAllocationChart());
+                        this.$watch('bufferTime', () => this.updateTimeAllocationChart());
+                    ">
+                        <canvas x-ref="timeAllocationCanvas"></canvas>
+                    </div>
+                    <div class="mt-8 space-y-4">
+                        <!-- Slider for Discover Phase -->
+                        <div class="flex flex-col md:flex-row items-center justify-between">
+                            <label for="sliderDiscover" class="w-full md:w-1/4 font-semibold text-gray-700">1. Discover:</label>
+                            <!-- x-bind:value binds the input's value to the discoverTime variable -->
+                            <!-- x-on:input updates discoverTime. The chart update is handled by $watch in init() -->
+                            <input type="range" id="sliderDiscover" min="0" max="90" x-bind:value="discoverTime" x-on:input="discoverTime = parseInt($event.target.value)" class="flex-grow md:w-3/4">
+                            <!-- x-text displays the current value of discoverTime -->
+                            <span id="valueDiscover" class="ml-4 text-gray-600 w-12 text-right" x-text="discoverTime + ' min'"></span>
+                        </div>
+                        <!-- Slider for Connect Phase -->
+                        <div class="flex flex-col md:flex-row items-center justify-between">
+                            <label for="sliderConnect" class="w-full md:w-1/4 font-semibold text-gray-700">2. Connect:</label>
+                            <input type="range" id="sliderConnect" min="0" max="90" x-bind:value="connectTime" x-on:input="connectTime = parseInt($event.target.value)" class="flex-grow md:w-3/4">
+                            <span id="valueConnect" class="ml-4 text-gray-600 w-12 text-right" x-text="connectTime + ' min'"></span>
+                        </div>
+                        <!-- Slider for Co-Create Phase -->
+                        <div class="flex flex-col md:flex-row items-center justify-between">
+                            <label for="sliderCoCreate" class="w-full md:w-1/4 font-semibold text-gray-700">3. Co-Create:</label>
+                            <input type="range" id="sliderCoCreate" min="0" max="90" x-bind:value="coCreateTime" x-on:input="coCreateTime = parseInt($event.target.value)" class="flex-grow md:w-3/4">
+                            <span id="valueCoCreate" class="ml-4 text-gray-600 w-12 text-right" x-text="coCreateTime + ' min'"></span>
+                        </div>
+                        <!-- Slider for Reinforce Phase -->
+                        <div class="flex flex-col md:flex-row items-center justify-between">
+                            <label for="sliderReinforce" class="w-full md:w-1/4 font-semibold text-gray-700">4. Reinforce:</label>
+                            <input type="range" id="sliderReinforce" min="0" max="90" x-bind:value="reinforceTime" x-on:input="reinforceTime = parseInt($event.target.value)" class="flex-grow md:w-3/4">
+                            <span id="valueReinforce" class="ml-4 text-gray-600 w-12 text-right" x-text="reinforceTime + ' min'"></span>
+                        </div>
+                        <!-- Slider for Buffer/Flex Phase -->
+                        <div class="flex flex-col md:flex-row items-center justify-between">
+                            <label for="sliderBuffer" class="w-full md:w-1/4 font-semibold text-gray-700">5. Buffer/Flex:</label>
+                            <input type="range" id="sliderBuffer" min="0" max="90" x-bind:value="bufferTime" x-on:input="bufferTime = parseInt($event.target.value)" class="flex-grow md:w-3/4">
+                            <span id="valueBuffer" class="ml-4 text-gray-600 w-12 text-right" x-text="bufferTime + ' min'"></span>
+                        </div>
+                        <!-- Display Total Time (computed property) -->
+                        <div class="text-right text-lg font-bold mt-4">Total Time: <span x-text="currentTotalTime"></span> min</div>
+                        <!-- Warning message shown if total time is not 90 minutes -->
+                        <div x-show="currentTotalTime !== totalLessonTime" class="text-center text-red-600 font-bold mt-2">Total must sum to 90 minutes!</div>
+                    </div>
+                </div>
+
+                <!-- Needs Discovery Chart -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-center mb-4 text-[#3357FF]">Uncovering Student Needs (Phase 1)</h3>
+                     <p class="text-center text-gray-600 mb-4">Phase 1 activities are designed to uncover different types of intrinsic needs. This chart shows the primary needs revealed by each brainstorming technique, informing how the teacher frames the "solution."</p>
+                    <!--
+                        x-init for the bar chart. This chart is static and doesn't need to react to slider changes.
+                    -->
+                    <div class="chart-container h-[400px] md:h-auto" x-init="
+                        const needsCtx = $refs.needsDiscoveryCanvas.getContext('2d');
+                        const needsLabels = ['Dream World Brainstorm', 'Annoying Problem Discussion', 'Favorite Fun Deconstruction'];
+                        new Chart(needsCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: needsLabels.map(wrapLabel),
+                                datasets: [
+                                    {
+                                        label: 'Animation & Story Needs',
+                                        data: [85, 20, 40],
+                                        backgroundColor: palette.blue,
+                                        borderColor: palette.blue,
+                                        borderWidth: 1
+                                    },
+                                    {
+                                        label: 'Utility & Tool Needs',
+                                        data: [15, 90, 10],
+                                        backgroundColor: palette.orange,
+                                        borderColor: palette.orange,
+                                        borderWidth: 1
+                                    },
+                                     {
+                                        label: 'Game & Interactivity Needs',
+                                        data: [40, 50, 95],
+                                        backgroundColor: palette.green,
+                                        borderColor: palette.green,
+                                        borderWidth: 1
+                                    }
+                                ]
+                            },
+                            options: {
+                                indexAxis: 'y', /* Horizontal bar chart */
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                scales: {
+                                    x: {
+                                        stacked: true, /* Bars are stacked */
+                                        ticks: { callback: function(value) { return value + '%' } },
+                                        title: { display: true, text: 'Percentage of Needs Uncovered' }
+                                    },
+                                    y: { stacked: true }
+                                },
+                                plugins: {
+                                    legend: { position: 'bottom' },
+                                    tooltip: { callbacks: { title: tooltipTitleCallback } }
+                                }
+                            }
+                        });
+                    ">
+                        <canvas x-ref="needsDiscoveryCanvas"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bridging Needs to Solutions (Phase 2) -->
+            <section id="phase2-info" class="mb-16 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-3xl font-bold text-center mb-4 text-[#3357FF]">Bridging Needs to Solutions (Phase 2)</h2>
+                <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">Once student interests are identified, the teacher explicitly connects these needs to Scratch's capabilities, transforming abstract concepts into tangible solutions for their ideas. This is where the "value proposition" of Scratch is clearly demonstrated.</p>
+                <div class="flex flex-col md:flex-row items-center justify-center space-y-6 md:space-y-0 md:space-x-8">
+                    <div class="text-center">
+                        <div class="bg-[#FF5733] text-white p-6 rounded-full inline-flex items-center justify-center w-24 h-24 text-4xl font-bold shadow-lg">💡</div>
+                        <p class="mt-3 text-lg font-semibold text-gray-700">Student Needs</p>
+                        <p class="text-sm text-gray-600">(e.g., "Make my character fly", "Tell a story")</p>
+                    </div>
+                    <div class="flow-arrow transform md:rotate-0 rotate-90">→</div>
+                    <div class="text-center">
+                        <div class="bg-[#F1C40F] text-white p-6 rounded-full inline-flex items-center justify-center w-24 h-24 text-4xl font-bold shadow-lg">🔗</div>
+                        <p class="mt-3 text-lg font-semibold text-gray-700">Teacher Connection</p>
+                        <p class="text-sm text-gray-600">(Framing Scratch as the solution)</p>
+                    </div>
+                    <div class="flow-arrow transform md:rotate-0 rotate-90">→</div>
+                    <div class="text-center">
+                        <div class="bg-[#33FF57] text-white p-6 rounded-full inline-flex items-center justify-center w-24 h-24 text-4xl font-bold shadow-lg">💻</div>
+                        <p class="mt-3 text-lg font-semibold text-gray-700">Scratch Features</p>
+                        <p class="text-sm text-gray-600">(e.g., Motion blocks, Looks blocks, Sound blocks)</p>
+                    </div>
+                    <div class="flow-arrow transform md:rotate-0 rotate-90">→</div>
+                    <div class="text-center">
+                        <div class="bg-[#3357FF] text-white p-6 rounded-full inline-flex items-center justify-center w-24 h-24 text-4xl font-bold shadow-lg">✨</div>
+                        <p class="mt-3 text-lg font-semibold text-gray-700">Realized Idea</p>
+                        <p class="text-sm text-gray-600">(e.g., Flying character, Interactive story)</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Building Skills, Building Confidence (Phase 3) & Measuring Success -->
+            <section id="deep-dive" class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold text-center mb-4 text-[#3357FF]">Building Skills, Building Confidence (Phase 3)</h3>
+                    <p class="text-center text-gray-600 mb-6">The hands-on phase is structured to provide a clear path to success, starting with a broad base of personalization and moving towards specific challenges. This fosters a sense of mastery and control.</p>
+                    <div class="flex flex-col items-center space-y-[-10px]">
+                        <div class="bg-[#FF33A1] text-white font-bold py-2 px-6 rounded-t-lg shadow-inner z-40 w-1/3 text-center">Challenge</div>
+                        <div class="bg-[#33FF57] text-white font-bold py-3 px-6 shadow-inner z-30 w-2/3 text-center">Personalize</div>
+                        <div class="bg-[#F1C40F] text-white font-bold py-4 px-6 shadow-inner z-20 w-5/6 text-center">Make It Move & Talk</div>
+                        <div class="bg-[#3357FF] text-white font-bold py-5 px-6 rounded-b-lg shadow-inner z-10 w-full text-center">Choose Your Character & World</div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-bold text-center mb-4 text-[#3357FF]">The Impact: Measuring Success</h2>
+                    <p class="text-center text-gray-600 mb-6">Success isn't measured by a final exam, but by observing the process and the student's journey. The assessment is qualitative, focusing on engagement, creation, and reflection.</p>
+                    <ul class="space-y-4">
+                        <li class="flex items-center bg-gray-50 p-4 rounded-lg"><span class="text-3xl mr-4">👀</span><div><h3 class="font-bold">Observation</h3><p>Did students show curiosity and engage willingly? Did they experiment without fear of failure?</p></div></li>
+                        <li class="flex items-center bg-gray-50 p-4 rounded-lg"><span class="text-3xl mr-4">🧩</span><div><h3 class="font-bold">Product</h3><p>Did they create a simple animation that aligns with a basic need, demonstrating understanding?</p></div></li>
+                        <li class="flex items-center bg-gray-50 p-4 rounded-lg"><span class="text-3xl mr-4">🤔</span><div><h3 class="font-bold">Reflection</h3><p>Can students connect their creation back to their original idea? Are they curious about what's next?</p></div></li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- The Iterative Loop (Phase 4) -->
+            <section id="phase4-info" class="mb-16 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-3xl font-bold text-center mb-4 text-[#3357FF]">The Iterative Loop: Reflect, Grow, Spark New Needs (Phase 4)</h2>
+                <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">Phase 4 is about consolidating learning, celebrating achievements, and crucially, using reflection to identify new curiosities and challenges. This naturally sparks the next cycle of learning within the Needs-Based Pedagogy framework.</p>
+                <div class="flex flex-col items-center justify-center">
+                    <div class="relative w-48 h-48 rounded-full bg-[#FF33A1] flex items-center justify-center text-white text-center text-lg font-bold shadow-xl">
+                        New Questions / Needs
+                    </div>
+                    <div class="flow-arrow rotate-90 mt-[-10px] mb-[-10px]">↓</div>
+                    <div class="relative w-48 h-48 rounded-full bg-[#33FF57] flex items-center justify-center text-white text-center text-lg font-bold shadow-xl">
+                        Creation & Application
+                    </div>
+                    <div class="flow-arrow rotate-90 mt-[-10px] mb-[-10px]">↓</div>
+                    <div class="relative w-48 h-48 rounded-full bg-[#F1C40F] flex items-center justify-center text-white text-center text-lg font-bold shadow-xl">
+                        Reflection & Showcasing
+                    </div>
+                    <div class="flow-arrow rotate-90 mt-[-10px] mb-[-10px]">↓</div>
+                    <div class="relative w-48 h-48 rounded-full bg-[#3357FF] flex items-center justify-center text-white text-center text-lg font-bold shadow-xl">
+                        Reinforced Understanding
+                    </div>
+                    <div class="flow-arrow rotate-90 mt-[-10px] mb-[-10px]">↑</div>
+                    <div class="relative w-48 h-48 rounded-full bg-[#FF5733] flex items-center justify-center text-white text-center text-lg font-bold shadow-xl">
+                        Back to Discovery
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer Section -->
+        <footer class="text-center mt-16 py-4 border-t">
+            <p class="text-gray-500">Infographic created based on the "Needs-Based Pedagogy" model. No SVG or Mermaid.js used in this rendering.</p>
+        </footer>
+
+    </div>
+</body>
+</html>
